@@ -5,11 +5,14 @@
 // in an array of integers.
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <map>
 #include <ctime>
 #include <cstdlib>
 
 // function declarations
 int get_kth_smallest(int*, int, int, int);
+int get_kth_smallest_v2(int*, int, int, int);
 int partition(int*, int, int);
 void swap(int*, int, int);
 int compare(int, int);
@@ -33,6 +36,9 @@ int main()
 //
 // Description:
 // Get the kth smallest item from the array using the quickselect algorithm
+// Worst Case: N^2 (higher likelihood of your computer getting struck by lightening)
+// Average Case: N
+// Space Complexity: 1 (in-place)
 //
 // Notes:
 // This function modifies the passed in array in-place.
@@ -66,6 +72,86 @@ int get_kth_smallest(int* arr, int left, int right, int k)
     } 
 }
 
+// function: get_kth_smallest_v2
+//
+// Description:
+// Get the kth smallest item from the array using the quickselect algorithm (deterministic version)
+//
+// Notes:
+// This function modifies the passed in array in-place.
+// assumed left < right
+//
+// Parameters:
+// arr:     Integer array we wish to swap elements within.
+// left:    Index of leftmost element in array for this partition
+// right:   Index of rightmost element in array for this partition
+//  
+// return value:
+// None, the values at the indices within the array will be swapped.
+int get_kth_smallest_v2(int* arr, int left, int right, int k)
+{
+    // if array is less than 50 elements
+    //   sort it and return kth element (use quicksort)
+    // else
+    //   group array into n/5 groups of size 5, and find the median of each group. (quickselect for n/2 on each group)
+    int numMedians = (right - left + 1) / 5;
+    int medianIndices[numMedians];
+    for (int i=0; i < numMedians; i++)
+    {
+        // go through array in chunks of 5 elements
+        int start = i * 5;
+        int end = start + 5 - 1;
+
+        // get the median element from this chunk of 5
+        int median_index = get_kth_smallest_v2(arr, start, end, 3); // out of 5 elements, 3 is the middle (median) value
+        medianIndices[i] = median_index;
+    }
+
+    // Use map to recover the index of the median-of-medians in the input array
+    std::map <int, int> medianValueToIndex;
+
+    // Add all the medians to an array so we can get the median-of-medians
+    int medians[numMedians];
+    for (int i = 0; i < numMedians; i++)
+    {
+        // get median values from array
+        int medianIndex = medianIndices[i];
+        int medianValue = arr[medianIndex];
+
+        medians[i] = medianValue;
+        medianValueToIndex[medianValue] = medianIndex;
+    }
+
+    // find the median of the medians to use as pivot
+    int tempMedianIndex = get_kth_smallest_v2(medians, 0, numMedians-1, 3);
+    int medianOfMediansValue = medians[tempMedianIndex];
+    int medianOfMedianIndex = medianValueToIndex[medianOfMediansValue];
+
+    // swap move median-of-medians value to start of array, since partition()
+    // uses the first element of the subset as the pivot
+    swap(arr, 0, medianOfMedianIndex);
+
+    //   find the median of the medians, this will be the pivot value (quickselect on n/2 for the set of medians)
+    //   swap first element of array with the pivot value element
+    //   run quickselect
+    int pivot_index = partition(arr, left, right);
+    if (k < (pivot_index+1))
+    {
+        // the kth item is to the left of the pivot.
+        return get_kth_smallest_v2(arr, left, pivot_index-1, k);
+    }
+    else if (k > (pivot_index+1))
+    {
+        // the kth smallest item is to the right of the pivot.
+        return get_kth_smallest_v2(arr, pivot_index+1, right, k);
+    }
+    else
+    {
+        // pivot index is the kth index in the array.
+        // found our kth smallest item.
+        return arr[pivot_index];
+    } 
+}
 
 // function: partition
 //
@@ -99,9 +185,11 @@ int partition(int* arr, int low_index, int high_index)
     // choose pivot value.
     // can also choose a random value as pivot, and swap it with the first element
     // in the array as an alternative pivot selection approach.
-    int random_index = (std::rand() % (high_index - low_index + 1)) + low_index;
-    swap(arr, low_index, random_index);
     int pivotValue = arr[low_index];
+
+    // int random_index = (std::rand() % (high_index - low_index + 1)) + low_index;
+    // swap(arr, low_index, random_index);
+    // int pivotValue = arr[low_index];
 
     // while the current and greater-than markers have not crossed
     // during the list traversal
@@ -279,7 +367,7 @@ void run_kth_smallest_test()
    // Partition Method Test
     int* currArray = nullptr;
     int numTestRuns = 100;
-    int arrSize = 20;
+    int arrSize = 10;
     int maxNum = 100;
     for (int i=0; i < numTestRuns; i++)
     {
@@ -289,7 +377,8 @@ void run_kth_smallest_test()
         currArray = gen_random_int_array(arrSize, maxNum);
 
         // get random kth target
-        int target_k = (std::rand() % arrSize) + 1;
+        //int target_k = (std::rand() % arrSize) + 1;
+        int target_k = (arrSize/2) + 1;
         std::cout << "target k = " << target_k << std::endl;
 
         std::cout << "Array Before getting kth smallest" << std::endl;
