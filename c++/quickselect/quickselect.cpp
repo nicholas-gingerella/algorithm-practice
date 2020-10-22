@@ -9,15 +9,19 @@
 #include <map>
 #include <ctime>
 #include <cstdlib>
+#include <chrono>
 
 // function declarations
 int get_kth_smallest(int*, int, int, int);
 int get_kth_smallest_v2(int*, int, int, int);
+void quicksort(int*, int, int);
 int partition(int*, int, int);
 void swap(int*, int, int);
 int compare(int, int);
 void run_partition_test();
 void run_kth_smallest_test();
+void run_kth_smallest_v2_test();
+void run_quicksort_test();
 int* gen_random_int_array(int, int);
 
 int main()
@@ -25,8 +29,23 @@ int main()
     // seed random number generator
     std::srand(std::time(nullptr));
 
-    //run_partition_test();
-    run_kth_smallest_test();
+    // run_partition_test();
+
+    // auto start = std::chrono::high_resolution_clock::now(); // returns a timepoint before sort
+    // run_kth_smallest_test();
+    // auto stop = std::chrono::high_resolution_clock::now(); // returns a timepoint after sort
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    // auto start = std::chrono::high_resolution_clock::now(); // returns a timepoint before sort
+    run_kth_smallest_v2_test();
+    // auto stop = std::chrono::high_resolution_clock::now(); // returns a timepoint after sort
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    // start = std::chrono::high_resolution_clock::now(); // returns a timepoint before sort
+    // run_quicksort_test();
+    // stop = std::chrono::high_resolution_clock::now(); // returns a timepoint after sort
+    // duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    // std::cout << "sort time: " << duration.count() << "microseconds" << std::endl;
     
     return 0;
 }
@@ -90,12 +109,19 @@ int get_kth_smallest(int* arr, int left, int right, int k)
 // None, the values at the indices within the array will be swapped.
 int get_kth_smallest_v2(int* arr, int left, int right, int k)
 {
-    // if array is less than 50 elements
-    //   sort it and return kth element (use quicksort)
-    // else
-    //   group array into n/5 groups of size 5, and find the median of each group. (quickselect for n/2 on each group)
-    int numMedians = (right - left + 1) / 5;
+    // If array is less than 50 elements, sort it and return the
+    // kth element from the array
+    int arr_size = right - left + 1;
+    if ( arr_size < 50)
+    {
+        quicksort(arr, left, right);
+        return left + (k - 1); //kth element index from this section of the array
+    }
+    
+    // Group array into n/5 groups of size 5, and find the median of each group.
+    int numMedians = arr_size / 5;
     int medianIndices[numMedians];
+    std::cout << "numMedians: " << numMedians << std::endl;
     for (int i=0; i < numMedians; i++)
     {
         // go through array in chunks of 5 elements
@@ -106,6 +132,21 @@ int get_kth_smallest_v2(int* arr, int left, int right, int k)
         int median_index = get_kth_smallest_v2(arr, start, end, 3); // out of 5 elements, 3 is the middle (median) value
         medianIndices[i] = median_index;
     }
+    
+    std::cout << "median indices: ";
+    for (int i = 0; i < numMedians; i++)
+    {
+        std::cout << medianIndices[i] << ",";
+    }
+    std::cout << std::endl;
+
+    std::cout << "median values: ";
+    for (int i = 0; i < numMedians; i++)
+    {
+        int medianIndex = medianIndices[i];
+        std::cout << arr[medianIndex] << ",";
+    }
+    std::cout << std::endl;
 
     // Use map to recover the index of the median-of-medians in the input array
     std::map <int, int> medianValueToIndex;
@@ -122,10 +163,26 @@ int get_kth_smallest_v2(int* arr, int left, int right, int k)
         medianValueToIndex[medianValue] = medianIndex;
     }
 
+    std::cout << "median values (medians array): ";
+    for (int i = 0; i < numMedians; i++)
+    {
+        std::cout << medians[i] << ",";
+    }
+    std::cout << std::endl;
+
     // find the median of the medians to use as pivot
-    int tempMedianIndex = get_kth_smallest_v2(medians, 0, numMedians-1, 3);
+    int tempMedianIndex = get_kth_smallest_v2(medians, 0, numMedians-1, numMedians/2);
     int medianOfMediansValue = medians[tempMedianIndex];
     int medianOfMedianIndex = medianValueToIndex[medianOfMediansValue];
+    
+    std::cout << "median values array after getting median: ";
+    for (int i = 0; i < numMedians; i++)
+    {
+        std::cout << medians[i] << ",";
+    }
+    std::cout << std::endl;
+    std::cout << "median of medians value: " << medianOfMediansValue << std::endl;
+    std::cout << "median of medians index: " << medianOfMedianIndex << std::endl;
 
     // swap move median-of-medians value to start of array, since partition()
     // uses the first element of the subset as the pivot
@@ -152,6 +209,33 @@ int get_kth_smallest_v2(int* arr, int left, int right, int k)
         return arr[pivot_index];
     } 
 }
+
+
+// function: quicksort
+//
+// Description:
+// Sort the array in-place using quicksort algorithm
+//
+// Notes:
+// None
+//
+// Parameters:
+// arr:     Integer array we wish to swap elements within.
+// left:    Index of array to start sort
+// right:   Index of array to end sort
+//  
+// return value:
+// None, the array is sorted in-place from index 'left' to index 'right'.
+void quicksort(int* arr, int left, int right)
+{
+    if (left < right)
+    {
+        int pivot_index = partition(arr, left, right);
+        quicksort(arr, left, pivot_index -1 );
+        quicksort(arr, pivot_index + 1, right);
+    }
+}
+
 
 // function: partition
 //
@@ -363,11 +447,9 @@ void run_partition_test()
 // None
 void run_kth_smallest_test()
 {
-
-   // Partition Method Test
     int* currArray = nullptr;
-    int numTestRuns = 100;
-    int arrSize = 10;
+    int numTestRuns = 10;
+    int arrSize = 20;
     int maxNum = 100;
     for (int i=0; i < numTestRuns; i++)
     {
@@ -377,8 +459,8 @@ void run_kth_smallest_test()
         currArray = gen_random_int_array(arrSize, maxNum);
 
         // get random kth target
-        //int target_k = (std::rand() % arrSize) + 1;
-        int target_k = (arrSize/2) + 1;
+        int target_k = (std::rand() % arrSize) + 1;
+        //int target_k = (arrSize/2) + 1;
         std::cout << "target k = " << target_k << std::endl;
 
         std::cout << "Array Before getting kth smallest" << std::endl;
@@ -405,6 +487,100 @@ void run_kth_smallest_test()
         std::cout << std::endl;
     }
 }
+
+// function: run_kth_smallest_v2_test
+//
+// Description:
+// Test get_kth_smallest() function on a number of random arrays
+//
+// Notes:
+// None
+//
+// Parameters:
+// None
+//  
+// return value:
+// None
+void run_kth_smallest_v2_test()
+{
+    int* currArray = nullptr;
+    int numTestRuns = 1;
+    int arrSize = 50;
+    int maxNum = 100;
+    for (int i=0; i < numTestRuns; i++)
+    {
+        std::cout << "get_kth_smallest_v2() Test #" << i+1 << std::endl;
+
+        // get array of random numbers
+        currArray = gen_random_int_array(arrSize, maxNum);
+
+        // get random kth target
+        int target_k = (std::rand() % arrSize) + 1;
+        std::cout << "target k = " << target_k << std::endl;
+
+        std::cout << "Array Before getting kth smallest" << std::endl;
+        for(int i=0; i < arrSize; i++)
+        {
+            std::cout << currArray[i] << " ";
+        }
+        std::cout << std::endl;
+
+        int left_index = 0;
+        int right_index = arrSize - 1;
+        int kth_item = get_kth_smallest_v2(currArray, left_index, right_index, target_k);
+    
+        std::cout << "Array After kth_smallest" << std::endl;
+        for(int i=0; i < arrSize; i++)
+        {
+            std::cout << currArray[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << target_k << "th smallest item: " << kth_item << std::endl;
+
+        delete [] currArray;
+
+        std::cout << std::endl;
+    }
+}
+
+
+// function: quicksort_test
+//
+// Description:
+// Test quicksort() function on a number of random arrays
+//
+// Notes:
+// None
+//
+// Parameters:
+// None
+//  
+// return value:
+// None
+void run_quicksort_test()
+{
+
+    int* currArray = nullptr;
+    int numTestRuns = 1;
+    int arrSize = 1000000;
+    int maxNum =  1000000;
+    for (int i=0; i < numTestRuns; i++)
+    {
+        std::cout << "qucksort() Test #" << i+1 << std::endl;
+
+        // get array of random numbers
+        currArray = gen_random_int_array(arrSize, maxNum);
+
+        int left_index = 0;
+        int right_index = arrSize - 1;
+        quicksort(currArray, left_index, right_index);
+
+        delete [] currArray;
+        std::cout << std::endl;
+
+    }
+}
+
 
 // function: gen_random_int_array
 //
