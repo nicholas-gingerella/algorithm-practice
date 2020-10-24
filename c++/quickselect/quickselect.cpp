@@ -29,6 +29,10 @@ int main()
     // seed random number generator
     std::srand(std::time(nullptr));
 
+    run_kth_smallest_test();
+    run_kth_smallest_v2_test();
+    std::cout << std::endl;
+
     int arr[50] = {51,18,14,1,16,29,45,62,94,76,77,87,79,62,22,65,81,87,59,25,43,56,81,35,56,35,34,23,22,70,81,74,40,47,75,56,76,72,70,22,48,0,10,28,62,32,45,95,19,57};
     auto start = std::chrono::high_resolution_clock::now(); // returns a timepoint before sort
     int kth = get_kth_smallest(arr, 0, 49, 30);
@@ -49,8 +53,6 @@ int main()
 
     quicksort(arr, 0, 49);
     std::cout << "kth from sorted: " << arr[29] << std::endl;
-
-
     std::cout << std::endl;
 
 
@@ -101,15 +103,15 @@ int main()
 int get_kth_smallest(int* arr, int left, int right, int k)
 {
     int pivot_index = partition(arr, left, right);
-    if (k < (pivot_index+1))
+    if (left + k < (pivot_index+1))
     {
         // the kth item is to the left of the pivot.
         return get_kth_smallest(arr, left, pivot_index-1, k);
     }
-    else if (k > (pivot_index+1))
+    else if (left + k > (pivot_index+1))
     {
         // the kth smallest item is to the right of the pivot.
-        return get_kth_smallest(arr, pivot_index+1, right, k);
+        return get_kth_smallest(arr, pivot_index+1, right, left + k - pivot_index - 1);
     }
     else
     {
@@ -152,7 +154,7 @@ int get_kth_smallest_v2(int* arr, int left, int right, int k)
     for (int i=0; i < numMedians; i++)
     {
         // go through array in chunks of 5 elements
-        int start = i * 5;
+        int start = left + (i * 5);
         int end = start + 5 - 1;
 
         // get the median element from this chunk of 5
@@ -188,15 +190,15 @@ int get_kth_smallest_v2(int* arr, int left, int right, int k)
     //   swap first element of array with the pivot value element
     //   run quickselect
     int pivot_index = partition(arr, left, right);
-    if (k < (pivot_index+1))
+    if (left + k < (pivot_index + 1))
     {
         // the kth item is to the left of the pivot.
-        return get_kth_smallest_v2(arr, left, pivot_index-1, k);
+        return get_kth_smallest_v2(arr, left, pivot_index - 1, k);
     }
-    else if (k > (pivot_index+1))
+    else if (left + k > (pivot_index + 1))
     {
         // the kth smallest item is to the right of the pivot.
-        return get_kth_smallest_v2(arr, pivot_index+1, right, k - pivot_index - 1);
+        return get_kth_smallest_v2(arr, pivot_index + 1, right, left + k - pivot_index - 1);
     }
     else
     {
@@ -441,73 +443,109 @@ void run_partition_test()
 // None
 void run_kth_smallest_test()
 {
+    std::cout << "Running tests for quickselect_V1..." << std::endl;
+
     int* currArray = nullptr;
-    int numTestRuns = 10;
-    int arrSize = 20;
-    int maxNum = 100;
+    int numTestRuns = 100;
+    int maxNum = 1000000;
+    int arrSize = (std::rand() % maxNum) + 1;;
+    bool failOccurred = false;
     for (int i=0; i < numTestRuns; i++)
     {
-        std::cout << "get_kth_smallest() Test #" << i+1 << std::endl;
-
         // get array of random numbers
         currArray = gen_random_int_array(arrSize, maxNum);
 
         // get random kth target
-        //int target_k = (std::rand() % arrSize) + 1;
-        int target_k = 10;
-        std::cout << "target k = " << target_k << std::endl;
+        int target_k = (std::rand() % arrSize) + 1;
 
-        std::cout << "Array Before getting kth smallest" << std::endl;
+        // copy of original array for later comparison
+        std::vector<int> orig_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << " ";
+            orig_arr.push_back(currArray[i]);
         }
-        std::cout << std::endl;
 
         int left_index = 0;
         int right_index = arrSize - 1;
         int kth_item_index = get_kth_smallest(currArray, left_index, right_index, target_k);
         int kth_item_value = currArray[kth_item_index];
-        std::cout << "Array After kth_smallest" << std::endl;
+
+        // copy of array after the quickselect algorithm has run
+        std::vector<int> after_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << " ";
+            after_arr.push_back(currArray[i]);
         }
-        std::cout << std::endl;
-        std::cout << target_k << "th smallest item: " << kth_item_value << std::endl;
 
-        // check if this is actually the case
+
+        // Check the validity of the kth item from the quickselect algorithm.
+        // Sort the array and get the kth item's index and compare it to our
+        // answer.
         quicksort(currArray, 0, arrSize-1);
-        std::cout << "Sorted array" << std::endl;
+
+        std::vector<int> sorted_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << " ";
+            sorted_arr.push_back(currArray[i]);
         }
-        std::cout << std::endl;
 
-        std::cout << "Does kth item match kth item in sorted array: ";
+        bool pass = true;
         if (currArray[target_k - 1] != kth_item_value)
         {
-            std::cout << "FAIL" << std::endl;
+            pass = false;
         }
-        else
-        {
-            std::cout << "PASS" << std::endl;
-        }
-        std::cout << "Does kth item index match k-1: ";
         if (target_k - 1 != kth_item_index)
         {
-            std::cout << "FAIL" << std::endl;
+            pass = false;
         }
-        else
+
+        if (!pass)
         {
-            std::cout << "PASS" << std::endl;
+            failOccurred = true;
+
+            std::cout << "get_kth_smallest_V1() Test #" << i+1 << std::endl;
+            std::cout << "FAIL" << std::endl;
+            std::cout << "Original Array:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << orig_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Array after kth_smallest:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << after_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Sorted Array:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << sorted_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Target k = " << target_k << std::endl;
+            std::cout << target_k << "th item in original array: " << kth_item_value << std::endl;
+            std::cout << target_k << "th item in sorted array: " << currArray[target_k - 1] << std::endl;
+            std::cout << target_k << "th index in original array: " << kth_item_index << std::endl;
+            std::cout << target_k << "th index in sorted array: " << target_k - 1 << std::endl;
         }
-        
 
         delete [] currArray;
+    }
 
-        std::cout << std::endl;
+    if (failOccurred)
+    {
+        std::cout << "Quickselect_V1() fail occurred" << std::endl;
+    }
+    else
+    {
+        std::cout << "Quickselect_V1() tests passed" << std::endl;
     }
 }
 
@@ -526,55 +564,52 @@ void run_kth_smallest_test()
 // None
 void run_kth_smallest_v2_test()
 {
+  std::cout << "Running tests for quickselect_V2..." << std::endl;
+
     int* currArray = nullptr;
-    int numTestRuns = 1;
-    int arrSize = 50;
-    int maxNum = 100;
+    int numTestRuns = 100;
+    int maxNum = 1000000;
+    int arrSize = (std::rand() % maxNum) + 1;;
+    bool failOccurred = false;
     for (int i=0; i < numTestRuns; i++)
     {
-        std::cout << "get_kth_smallest_v2() Test #" << i+1 << std::endl;
-
         // get array of random numbers
         currArray = gen_random_int_array(arrSize, maxNum);
 
         // get random kth target
         int target_k = (std::rand() % arrSize) + 1;
 
-        std::cout << "Array: {";
+        // copy of original array for later comparison
+        std::vector<int> orig_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << ",";
+            orig_arr.push_back(currArray[i]);
         }
-        std::cout << "};";
-        std::cout << std::endl;
-        std::cout << "target k = " << target_k << std::endl;
 
         int left_index = 0;
         int right_index = arrSize - 1;
-        int kth_item_index = get_kth_smallest_v2(currArray, left_index, right_index, target_k);
+        int kth_item_index = get_kth_smallest(currArray, left_index, right_index, target_k);
         int kth_item_value = currArray[kth_item_index];
 
-        std::cout << "Array After kth_smallest" << std::endl;
+        // copy of array after the quickselect algorithm has run
+        std::vector<int> after_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << " ";
+            after_arr.push_back(currArray[i]);
         }
-        std::cout << std::endl;
-        std::cout << target_k << "th smallest item: " << kth_item_value << std::endl;
 
 
-        // check if this is actually the case
+        // Check the validity of the kth item from the quickselect algorithm.
+        // Sort the array and get the kth item's index and compare it to our
+        // answer.
         quicksort(currArray, 0, arrSize-1);
-        std::cout << "Sorted Array: {";
+
+        std::vector<int> sorted_arr;
         for(int i=0; i < arrSize; i++)
         {
-            std::cout << currArray[i] << ",";
+            sorted_arr.push_back(currArray[i]);
         }
-        std::cout << "};";
-        std::cout << std::endl;
 
-        // is the chosen kth item in the kth place of the a sorted array?
-        // does it match the kth item in a sorted array?
         bool pass = true;
         if (currArray[target_k - 1] != kth_item_value)
         {
@@ -587,7 +622,35 @@ void run_kth_smallest_v2_test()
 
         if (!pass)
         {
+            failOccurred = true;
+
+            std::cout << "get_kth_smallest_V2() Test #" << i+1 << std::endl;
             std::cout << "FAIL" << std::endl;
+            std::cout << "Original Array:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << orig_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Array after kth_smallest:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << after_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Sorted Array:" << std::endl;
+            std::cout << "{";
+            for(int i=0; i < arrSize; i++)
+            {
+                std::cout << sorted_arr[i] << ",";
+            }
+            std::cout << "};";
+            std::cout << std::endl;
+            std::cout << "Target k = " << target_k << std::endl;
             std::cout << target_k << "th item in original array: " << kth_item_value << std::endl;
             std::cout << target_k << "th item in sorted array: " << currArray[target_k - 1] << std::endl;
             std::cout << target_k << "th index in original array: " << kth_item_index << std::endl;
@@ -595,8 +658,15 @@ void run_kth_smallest_v2_test()
         }
 
         delete [] currArray;
-        
-        std::cout << std::endl;
+    }
+
+    if (failOccurred)
+    {
+        std::cout << "Quickselect_V2() fail occurred" << std::endl;
+    }
+    else
+    {
+        std::cout << "Quickselect_V2() tests passed" << std::endl;
     }
 }
 
