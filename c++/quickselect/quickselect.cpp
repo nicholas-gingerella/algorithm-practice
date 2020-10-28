@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 
+
 // function: get_kth_smallest
 //
 // Description:
@@ -57,6 +58,7 @@ int get_kth_smallest(int *arr, int left, int right, int k)
         return pivot_index;
     }
 }
+
 
 // function: get_kth_smallest_v2
 //
@@ -148,6 +150,7 @@ int get_kth_smallest_v2(int *arr, int left, int right, int k)
     }
 }
 
+
 // function: quicksort
 //
 // Description:
@@ -172,6 +175,7 @@ void quicksort(int *arr, int left, int right)
         quicksort(arr, pivot_index + 1, right);
     }
 }
+
 
 // function: partition
 //
@@ -217,42 +221,43 @@ int partition(int *arr, int low_index, int high_index)
 
         switch (compareResult)
         {
-        case -1:
-        {
-            // current marker < pivot value
-            // swap values between current marker and less-than marker
-            // increment both markers
-            swap(arr, currentIndex, lessThanIndex);
-            currentIndex++;
-            lessThanIndex++;
-            break;
-        }
-        case 0:
-        {
-            // current marker == pivot value
-            // increment current marker
-            currentIndex++;
-            break;
-        }
-        case 1:
-        {
-            // current marker > pivot value
-            // swap values between current marker and greater-than marker
-            // decrement greater-than marker only
-            swap(arr, currentIndex, greaterThanIndex);
-            greaterThanIndex--;
-            break;
-        }
-        default:
-        {
-            std::cout << "Error: Partition(" << low_index << "," << high_index << ") - Why are we here? Just to suffer?" << std::endl;
-        }
+            case -1:
+            {
+                // current marker < pivot value
+                // swap values between current marker and less-than marker
+                // increment both markers
+                swap(arr, currentIndex, lessThanIndex);
+                currentIndex++;
+                lessThanIndex++;
+                break;
+            }
+            case 0:
+            {
+                // current marker == pivot value
+                // increment current marker
+                currentIndex++;
+                break;
+            }
+            case 1:
+            {
+                // current marker > pivot value
+                // swap values between current marker and greater-than marker
+                // decrement greater-than marker only
+                swap(arr, currentIndex, greaterThanIndex);
+                greaterThanIndex--;
+                break;
+            }
+            default:
+            {
+                std::cout << "Error: Partition(" << low_index << "," << high_index << ") - Why are we here? Just to suffer?" << std::endl;
+            }
         }
     }
 
     // greater than marker is now pointing to the final index of our pivot value.
     return greaterThanIndex;
 }
+
 
 // function: compare
 //
@@ -285,6 +290,7 @@ int compare(int i, int j)
         return 0;
     }
 }
+
 
 // function: swap
 //
