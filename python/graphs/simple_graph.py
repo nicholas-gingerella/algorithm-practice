@@ -2,6 +2,7 @@
 # Author: Nick Gingerella
 # Description:
 # Simple implementation of a graph data structure and various graph algorithms
+from collections import deque
 
 # adjacency list
 graph = {
@@ -26,8 +27,6 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-# print(find_path(graph, 'A', 'E'))
-
 def find_all_paths(graph, start, end, path=[]):
     path = path + [start] # creates a new list with start node to path
     if start == end:
@@ -41,7 +40,6 @@ def find_all_paths(graph, start, end, path=[]):
             for newpath in newpaths:
                 paths.append(newpath)
     return paths
-
 
 """ Python Class
 A simple Python graph class, demonstrating the essential
@@ -87,6 +85,9 @@ class Graph():
         else:
             self.__graph_dict[vertex1] = [vertex2]
 
+    def get_adj_nodes(self, node):
+        return self.__graph_dict[node]
+
     def __generate_edges(self):
         """ A static method for generating the edges of the
             graph "graph". Edges are represented as sets with
@@ -110,12 +111,13 @@ class Graph():
 
 if __name__ == "__main__":
     g = {
-        'a':['d'],
-        'b':['c'],
-        'c':['b','c','d','e'],
-        'd':['a','c'],
-        'e':['c'],
-        'f':[]
+        'a':['b','c','d'],
+        'b':['a','e'],
+        'c':['a','f'],
+        'd':['g','a'],
+        'e':['b','f'],
+        'f':['c','g'],
+        'g':['d','f']
     }
     graph = Graph(g)
     print("graph:")
